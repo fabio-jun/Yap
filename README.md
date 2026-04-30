@@ -2,7 +2,7 @@
 
 A full-stack social network inspired by Twitter/X. Users create short posts (yaps), follow others, like, comment, bookmark, re-yap, use hashtags and mentions, upload media, receive notifications, report content, block users, and send direct messages.
 
-Deployed on Vercel (frontend) + Render (API) + Neon (database).
+Current public deployment is on Vercel + Render. The migration target in this repo is Azure Static Web Apps + Azure Container Apps + Azure Database for PostgreSQL + Azure Blob Storage.
 
 ## Monorepo changed to multirepo
 
@@ -11,15 +11,15 @@ https://github.com/fabio-jun/yap-client
 
 ## Deploy link
 
-https://yap-client.vercel.app/
+https://mango-bush-0c28e7b0f.7.azurestaticapps.net/
 
 ## Tech Stack
 
-**Backend:** ASP.NET Core 10, Entity Framework Core, PostgreSQL, Redis, Cloudinary, Swagger/OpenAPI, xUnit
+**Backend:** ASP.NET Core 10, Entity Framework Core, PostgreSQL, Redis cache, Azure Blob Storage, Swagger/OpenAPI, xUnit
 
 **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, daisyUI v5
 
-**Infrastructure:** Docker Compose, GitHub Actions CI/CD, Render, Vercel, Neon
+**Infrastructure:** Docker Compose, Azure Static Web Apps, Azure Container Apps, Azure Database for PostgreSQL, Azure Blob Storage
 
 ## Architecture
 
@@ -43,7 +43,7 @@ Blog.Infrastructure -- EF Core, repositories, migrations, seeder
 
 ### Run with Docker
 
-Create a local `.env` file in the repository root with your rotated Cloudinary URL, a long random JWT signing key, and a local Postgres password:
+Create a local `.env` file in the repository root with your JWT signing key and local Postgres password:
 
 
 ```bash
@@ -55,6 +55,8 @@ This starts four containers:
 - **Redis** on port 6379
 - **API** on port 8080
 - **Client** on port 3000 (nginx reverse proxy)
+
+Docker Compose uses `Redis__Connection=redis:6379` and `Storage__Provider=Local`.
 
 The database is automatically migrated and seeded with fake data (10 users, 50 posts, follows, likes, comments). Default password for all seeded users: `123456`.
 
@@ -68,7 +70,7 @@ cd yap-api
 dotnet test tests/Blog.Tests
 ```
 
-82 unit tests covering posts, likes, follows, users, comments, tags, reposts, reports, blocks, notifications, and cache keys (xUnit + NSubstitute).
+90 unit tests covering posts, likes, follows, users, comments, tags, reposts, reports, blocks, notifications, cache keys, and Swagger metadata (xUnit + NSubstitute).
 
 ## Project Structure
 
@@ -101,8 +103,10 @@ yap-client/
 | Jwt__Key | JWT signing key |
 | Jwt__Issuer | JWT issuer |
 | Jwt__Audience | JWT audience |
-| Cloudinary__Url | Cloudinary URL for media uploads |
-| Redis__Connection / REDIS__CONNECTION | Redis connection string |
+| Redis__Connection | Redis connection string used by the API cache |
+| Storage__Provider | Storage backend selector. Azure target uses `AzureBlob` |
+| AzureBlob__ConnectionString | Azure Blob Storage connection string |
+| AzureBlob__ContainerName | Public blob container name for uploaded media |
 | Cors__AllowedOrigins__0 | Allowed CORS origin |
 | Swagger__Enabled | Enables Swagger UI outside Development when set to `true` |
 
@@ -112,15 +116,15 @@ yap-client/
 |----------|-------------|
 | VITE_API_URL | Backend API base URL |
 
-## CI/CD
+## Azure Target
 
-GitHub Actions runs on every push to `master`:
-1. Restore, build, and test the backend
-2. On success, triggers a deploy hook to Render
+- **Frontend:** Azure Static Web Apps
+- **API:** Azure Container Apps
+- **Database:** Azure Database for PostgreSQL Flexible Server
+- **Media:** Azure Blob Storage
+- **Cache:** Redis Cloud via Azure Marketplace
 
-The frontend auto-deploys on Vercel when connected to the repository.
-
-Render also expects a Redis connection string through `REDIS__CONNECTION` when caching is enabled.
+See [docs/azure-migration.md](C:\Users\fabio\Desktop\Code\Yap\docs\azure-migration.md) for the migration flow and Azure resource checklist.
 
 ## License
 

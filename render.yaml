@@ -1,11 +1,4 @@
 services:
-  - type: keyvalue
-    name: yap-redis
-    region: oregon
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
-
   - type: web
     name: yap-api
     runtime: docker
@@ -25,10 +18,13 @@ services:
         value: BlogAPI
       - key: Jwt__Audience
         value: BlogClient
-      - key: REDIS__CONNECTION
-        fromService:
-          type: keyvalue
-          name: yap-redis
-          property: connectionString
+      - key: Redis__Connection
+        sync: false
+      - key: Storage__Provider
+        value: AzureBlob
+      - key: AzureBlob__ConnectionString
+        sync: false
+      - key: AzureBlob__ContainerName
+        sync: false
       - key: Cors__AllowedOrigins__0
         sync: false
